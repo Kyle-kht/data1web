@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导购员业绩管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #f8fafc;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            margin: 16px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #1e3a8a;
+            border: 2px solid #1e3a8a;
+            border-radius: 12px;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: #1e3a8a;
+            color: white;
+        }
+        
+        .btn-edit {
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-edit:hover {
+            background: #0ea5e9;
+            color: white;
+        }
+        
+        .btn-edit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            margin-bottom: 16px;
+            background: #f8fafc;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            z-index: 100;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: all 0.3s;
+            padding: 8px 20px;
+            border-radius: 12px;
+        }
+        
+        .nav-item.active {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .nav-item i {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item span {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 420px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 32px 24px;
+            margin: 16px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(30, 58, 138, 0.3);
+        }
+        
+        .stat-value {
+            font-size: 52px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .record-item:last-child {
+            border-bottom: none;
+        }
+        
+        .record-date {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 15px;
+        }
+        
+        .record-data {
+            text-align: right;
+        }
+        
+        .record-data span {
+            display: block;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .record-edit {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .rank-item {
+            display: flex;
+            align-items: center;
+            padding: 18px;
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s;
+        }
+        
+        .rank-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rank-number {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            margin-right: 16px;
+        }
+        
+        .rank-number.gold {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+        
+        .rank-number.silver {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+        }
+        
+        .rank-number.bronze {
+            background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+        }
+        
+        .rank-number.normal {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .rank-info {
+            flex: 1;
+        }
+        
+        .rank-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 16px;
+        }
+        
+        .rank-score {
+            color: #3b82f6;
+            font-weight: 800;
+            font-size: 20px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: #cbd5e1;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: #3b82f6;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        .badge-admin {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #b45309;
+        }
+        
+        .badge-user {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1d4ed8;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .filter-bar select,
+        .filter-bar input {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            flex: 1;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 16px 28px;
+            border-radius: 12px;
+            z-index: 300;
+            animation: slideDown 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        
+        .role-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .role-btn {
+            flex: 1;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .role-btn.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .role-btn i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+            color: #3b82f6;
+        }
+        
+        .role-btn span {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 24px 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .divider span {
+            padding: 0 16px;
+        }
+        
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .avatar i {
+            font-size: 44px;
+            color: white;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        .quick-stat {
+            background: rgba(255,255,255,0.15);
+            padding: 16px;
+            border-radius: 12px;
+        }
+        
+        .quick-stat-value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+        
+        .quick-stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .month-selector {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .month-selector option {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container" id="app">
+        <!-- 选择登录方式 -->
+        <div id="loginChoicePage" class="page active">
+            <div style="padding: 60px 24px; text-align: center;">
+                <div style="width: 120px; height: 120px; background: white; border-radius: 30px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                    <i class="fas fa-chart-line" style="font-size: 56px; color: #3b82f6;"></i>
+                </div>
+                <h1 style="font-size: 28px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">业绩管理系统</h1>
+                <p style="color: #64748b; margin-bottom: 48px;">专业的导购员业绩管理平台</p>
+            </div>
+            
+            <div class="card">
+                <div class="role-selector">
+                    <div class="role-btn active" onclick="selectRole('user')">
+                        <i class="fas fa-user-tie"></i>
+                        <span>导购员登录</span>
+                    </div>
+                    <div class="role-btn" onclick="selectRole('admin')">
+                        <i class="fas fa-user-shield"></i>
+                        <span>管理员登录</span>
+                    </div>
+                </div>
+                
+                <div id="loginForm">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">手机号</label>
+                    <input type="tel" id="loginPhone" class="input-field" placeholder="请输入手机号" maxlength="11">
+                    
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">密码</label>
+                    <input type="password" id="loginPassword" class="input-field" placeholder="请输入密码">
+                    
+                    <button class="btn-primary" onclick="handleLogin()">登录</button>
+                </div>
+                
+                <div class="divider">
+                    <span>没有账号？</span>
+                </div>
+                
+                <button class="btn-secondary" style="width: 100%;" onclick="showRegister()">立即注册</button>
+            </div>
+        </div>
+
+        <!-- 注册页面 -->
+        <div id="registerPage" class="page">
+            <div class="gradient-bg" style="padding: 24px;">
+                <div style="display: flex; align-items: center;">
+                    <button onclick="showLoginChoice()" style="background: rgba(255,255,255,0.15); border: none; color: white; padding: 12px; border-radius: 10px; cursor: pointer;">
+                        <i class="fas fa-arrow-left" style="font-size: 18px;"></i>
+                    </button>
+                    <h2 style="color: white; font-size: 20px; font-weight: 700; margin-left: 16px;">注册账号</h2>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="role-selector">
+                    <div class="role-btn active" onclick="selectRole('user', true)">
+                        <i class="fas fa-user-tie"></i>
+                        <span>导购员注册</span>
+                    </div>
+                    <div class="role-btn" onclick="selectRole('admin', true)">
+                        <i class="fas fa-user-shield"></i>
+                        <span>管理员注册</span>
+                    </div>
+                </div>
+                
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">姓名</label>
+                <input type="text" id="registerName" class="input-field" placeholder="请输入您的真实姓名">
+                
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">手机号</label>
+                <input type="tel" id="registerPhone" class="input-field" placeholder="请输入手机号" maxlength="11">
+                
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">密码</label>
+                <input type="password" id="registerPassword" class="input-field" placeholder="请设置密码（至少6位）">
+                
+                <button class="btn-primary" onclick="handleRegister()">注册</button>
+            </div>
+        </div>
+        
+        <!-- 导购员首页 -->
+        <div id="homePage" class="page">
+            <div class="gradient-bg" style="padding: 24px 16px 50px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="color: white; font-size: 22px; font-weight: 700;">我的业绩</h2>
+                    <select id="currentMonth" class="month-selector" onchange="changeMonth()">
+                    </select>
+                </div>
+            </div>
+            
+            <div class="stat-card" style="margin-top: -40px;">
+                <div class="stat-value" id="totalGiftCount">0</div>
+                <div class="stat-label">本月礼包售卖</div>
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <div class="quick-stat-value" id="totalLiveReached">0</div>
+                        <div class="quick-stat-label">直播达成</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-value" id="totalVideoCount">0</div>
+                        <div class="quick-stat-label">短视频</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 0 16px;">
+                <button id="addDataBtn" class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="openFormModal()">
+                    <i class="fas fa-plus-circle"></i> 填写今日数据
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3 style="font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-history" style="color: #3b82f6;"></i> 最近记录
+                </h3>
+                <div id="recordsList">
+                    <div style="text-align: center; color: #94a3b8; padding: 40px 20px;">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+                        暂无记录
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 排名页 -->
+        <div id="rankingPage" class="page">
+            <div class="gradient-bg" style="padding: 30px 16px 60px;">
+                <h2 style="color: white; font-size: 22px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fas fa-trophy"></i> 本月排行榜
+                </h2>
+                <p style="color: rgba(255,255,255,0.85); text-align: center; margin-top: 8px;">按礼包售卖数量排名</p>
+            </div>
+            
+            <div style="padding: 0 16px; margin-top: -40px;" id="rankingList">
+            </div>
+        </div>
+        
+        <!-- 我的页面 -->
+        <div id="profilePage" class="page">
+            <div class="gradient-bg" style="padding: 40px 16px 60px;">
+                <div style="text-align: center;">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 id="profileUsername" style="color: white; font-size: 24px; font-weight: 700; margin-bottom: 8px;">用户名</h2>
+                    <span id="profileRole" class="badge badge-user">导购员</span>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: -40px;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 24px;">个人设置</h3>
+                
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">修改姓名</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="editUsername" class="input-field" style="flex: 1; margin-bottom: 0;" placeholder="请输入新姓名">
+                        <button class="btn-primary" style="padding: 16px 24px; width: auto;" onclick="updateUsername()">保存</button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 1px solid #f1f5f9;">
+                    <div>
+                        <div style="font-weight: 600; color: #1e293b; font-size: 15px;">每日填写提醒</div>
+                        <div style="font-size: 13px; color: #64748b; margin-top: 4px;">开启后提醒您每日填写业绩</div>
+                    </div>
+                    <div id="subscriptionToggle" class="toggle-switch" onclick="toggleSubscription()"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <button class="btn-secondary" style="width: 100%; color: #dc2626; border-color: #dc2626;" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> 退出登录
+                </button>
+            </div>
+        </div>
+        
+        <!-- 管理员页面 -->
+        <div id="adminPage" class="page">
+            <div class="gradient-bg" style="padding: 30px 16px;">
+                <h2 style="color: white; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-cog"></i> 管理后台
+                </h2>
+            </div>
+            
+            <div class="stat-card" style="margin-top: -30px;">
+                <div class="stat-value" id="todayFillCount">0</div>
+                <div class="stat-label">今日已填写人数</div>
+            </div>
+            
+            <div class="filter-bar">
+                <div class="multi-select-container" style="position: relative; flex: 1;">
+                    <div 
+                        id="multiSelectTrigger"
+                        style="padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
+                        onclick="toggleMultiSelect()"
+                    >
+                        <span id="selectedNamesText" style="color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">选择导购员</span>
+                        <i class="fas fa-chevron-down" style="color: #94a3b8;"></i>
+                    </div>
+                    <div 
+                        id="multiSelectDropdown" 
+                        class="hidden"
+                        style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #e2e8f0; border-radius: 12px; margin-top: 8px; max-height: 250px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.1);"
+                    >
+                        <div style="padding: 12px; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; background: white;">
+                            <input 
+                                type="text" 
+                                id="multiSelectSearch" 
+                                placeholder="搜索姓名..." 
+                                oninput="filterMultiSelectOptions()"
+                                style="width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none;"
+                            >
+                        </div>
+                        <div id="multiSelectOptions" style="padding: 8px 0;"></div>
+                    </div>
+                </div>
+                <input type="date" id="filterDate" placeholder="选择日期">
+                <button class="btn-primary" style="padding: 12px 20px; font-size: 14px; width: auto;" onclick="filterRecords()">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+            
+            <div style="padding: 0 16px; margin-bottom: 16px; display: flex; gap: 12px;">
+                <button class="btn-secondary" style="flex: 1;" onclick="refreshData()">
+                    <i class="fas fa-sync-alt" style="margin-right: 8px;"></i> 刷新数据
+                </button>
+                <button class="btn-secondary" style="flex: 1;" onclick="exportAllData()">
+                    <i class="fas fa-download" style="margin-right: 8px;"></i> 导出数据
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3 style="font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 20px;">所有记录</h3>
+                <div id="adminRecordsList">
+                    <div style="text-align: center; color: #94a3b8; padding: 40px 20px;">
+                        暂无数据
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <button class="btn-secondary" style="width: 100%; color: #dc2626; border-color: #dc2626;" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> 退出登录
+                </button>
+            </div>
+        </div>
+        
+        <!-- 底部导航 -->
+        <div id="bottomNav" class="bottom-nav hidden">
+            <div class="nav-item active" onclick="switchPage('home')">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('ranking')">
+                <i class="fas fa-chart-bar"></i>
+                <span>排名</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('profile')">
+                <i class="fas fa-user"></i>
+                <span>我的</span>
+            </div>
+        </div>
+        
+        <!-- 填写数据弹窗 -->
+        <div id="formModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+                    <h3 id="formTitle" style="font-size: 20px; font-weight: 700; color: #1e293b;">填写今日数据</h3>
+                    <button onclick="closeFormModal()" style="background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; padding: 8px;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">日期</label>
+                <input type="date" id="formDate" class="input-field">
+                
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">直播达成</label>
+                <input type="number" id="formLiveReached" class="input-field" placeholder="请输入直播达成数量" min="0">
+                
+                <div style="margin-top: 16px;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">短视频数量</label>
+                    <input type="number" id="formVideoCount" class="input-field" placeholder="请输入短视频数量" min="0">
+                </div>
+                
+                <div style="margin-top: 16px;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">礼包售卖数量</label>
+                    <input type="number" id="formGiftCount" class="input-field" placeholder="请输入礼包售卖数量" min="0">
+                </div>
+                
+                <button id="formSubmitBtn" class="btn-primary" style="margin-top: 24px;" onclick="submitForm()">提交数据</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://eklhxokclpqtcxzriybu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrbGh4b2tjbHBxdGN4enJpeWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMTgyNTAsImV4cCI6MjA5NTg5NDI1MH0.LX3gUE0thfPXGe48JFQlPXigCCBhbK-N_MHMKEz4iNs';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let currentRole = 'user';
+        let selectedYear = new Date().getFullYear();
+        let selectedMonth = new Date().getMonth();
+        let editingRecordId = null;
+        let appData = {
+            users: [],
+            records: []
+        };
+        
+        async function init() {
+            await loadAppData();
+            checkAuth();
+            populateMonthSelector();
+        }
+        
+        async function loadAppData() {
+            try {
+                const [usersRes, recordsRes] = await Promise.all([
+                    supabaseClient.from('users').select('*'),
+                    supabaseClient.from('records').select('*').order('record_date', { ascending: false })
+                ]);
+                
+                if (usersRes.data) {
+                    appData.users = usersRes.data.map(u => ({
+                        id: u.id,
+                        name: u.name,
+                        phone: u.phone,
+                        password: u.password,
+                        role: u.role,
+                        subscriptionEnabled: u.subscription_enabled,
+                        createdAt: u.created_at
+                    }));
+                }
+                
+                if (recordsRes.data) {
+                    appData.records = recordsRes.data.map(r => ({
+                        id: r.id,
+                        userId: r.user_id,
+                        userName: r.user_name,
+                        recordDate: r.record_date,
+                        liveReached: r.live_reached,
+                        videoCount: r.video_count,
+                        giftCount: r.gift_count,
+                        editCount: r.edit_count
+                    }));
+                }
+            } catch (err) {
+                console.error('加载数据失败:', err);
+                showToast('网络错误，使用本地缓存');
+                const saved = localStorage.getItem('performanceAppData');
+                if (saved) {
+                    appData = JSON.parse(saved);
+                }
+            }
+        }
+        
+        async function saveAppData() {
+            localStorage.setItem('performanceAppData', JSON.stringify(appData));
+        }
+
+        function populateMonthSelector() {
+            const select = document.getElementById('currentMonth');
+            const now = new Date();
+            select.innerHTML = '';
+            for (let i = -11; i <= 0; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const value = `${date.getFullYear()}-${date.getMonth()}`;
+                const label = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                if (i === 0) option.selected = true;
+                select.appendChild(option);
+            }
+        }
+
+        function changeMonth() {
+            const value = document.getElementById('currentMonth').value;
+            [selectedYear, selectedMonth] = value.split('-').map(Number);
+            loadHomeData();
+            loadRankingData();
+        }
+
+        function getMonthStart() {
+            return new Date(selectedYear, selectedMonth, 1);
+        }
+
+        function getMonthEnd() {
+            return new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+        }
+
+        function selectRole(role, isRegister = false) {
+            currentRole = role;
+            document.querySelectorAll('.role-btn').forEach((btn, index) => {
+                if ((role === 'user' && index === 0) || (role === 'admin' && index === 1)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function showLoginChoice() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('loginChoicePage').classList.add('active');
+        }
+
+        function showRegister() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('registerPage').classList.add('active');
+        }
+
+        async function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!phone) {
+                showToast('请输入手机号');
+                return;
+            }
+            
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号');
+                return;
+            }
+            
+            if (!password) {
+                showToast('请输入密码');
+                return;
+            }
+            
+            showToast('登录中...');
+            
+            try {
+                const { data: users, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('phone', phone)
+                    .eq('role', currentRole);
+                
+                if (error) throw error;
+                
+                const user = users && users.length > 0 ? users[0] : null;
+                
+                if (!user) {
+                    showToast('账号不存在，请先注册');
+                    return;
+                }
+                
+                if (user.password !== password) {
+                    showToast('密码错误');
+                    return;
+                }
+                
+                const userObj = {
+                    id: user.id,
+                    name: user.name,
+                    phone: user.phone,
+                    password: user.password,
+                    role: user.role,
+                    subscriptionEnabled: user.subscription_enabled,
+                    createdAt: user.created_at
+                };
+                
+                currentUser = userObj;
+                localStorage.setItem('currentUser', JSON.stringify(userObj));
+                showToast('登录成功');
+                showMainApp();
+            } catch (err) {
+                console.error('登录失败:', err);
+                showToast('登录失败，请检查网络');
+            }
+        }
+
+        async function handleRegister() {
+            const name = document.getElementById('registerName').value.trim();
+            const phone = document.getElementById('registerPhone').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            
+            if (!name) {
+                showToast('请输入姓名');
+                return;
+            }
+            
+            if (!phone) {
+                showToast('请输入手机号');
+                return;
+            }
+            
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号');
+                return;
+            }
+            
+            if (!password || password.length < 6) {
+                showToast('密码至少6位');
+                return;
+            }
+            
+            if (currentRole === 'admin' && !name.endsWith('gly')) {
+                showToast('姓名格式不正确');
+                return;
+            }
+            
+            showToast('注册中...');
+            
+            try {
+                // 检查手机号是否已注册
+                const { data: existing } = await supabaseClient
+                    .from('users')
+                    .select('id')
+                    .eq('phone', phone);
+                
+                if (existing && existing.length > 0) {
+                    showToast('该手机号已注册');
+                    return;
+                }
+                
+                const newUserId = Date.now().toString();
+                const newUser = {
+                    id: newUserId,
+                    name: name,
+                    phone: phone,
+                    password: password,
+                    role: currentRole,
+                    subscription_enabled: false
+                };
+                
+                const { error } = await supabaseClient
+                    .from('users')
+                    .insert([newUser]);
+                
+                if (error) throw error;
+                
+                const userObj = {
+                    id: newUserId,
+                    name: name,
+                    phone: phone,
+                    password: password,
+                    role: currentRole,
+                    subscriptionEnabled: false,
+                    createdAt: new Date().toISOString()
+                };
+                
+                appData.users.push(newUser);
+                saveAppData();
+                
+                currentUser = userObj;
+                localStorage.setItem('currentUser', JSON.stringify(userObj));
+                showToast('注册成功');
+                showMainApp();
+            } catch (err) {
+                console.error('注册失败:', err);
+                showToast('注册失败：' + (err.message || '请检查网络'));
+            }
+        }
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainApp();
+            }
+        }
+
+        function showMainApp() {
+            document.getElementById('loginChoicePage').classList.remove('active');
+            document.getElementById('registerPage').classList.remove('active');
+            document.getElementById('bottomNav').classList.remove('hidden');
+            
+            selectedYear = new Date().getFullYear();
+            selectedMonth = new Date().getMonth();
+            populateMonthSelector();
+            
+            if (currentUser.role === 'admin') {
+                switchPage('admin');
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems[0].style.display = 'none'; // 隐藏首页按钮
+                // 让第三个按钮可以在管理和我的页面间切换
+                navItems[2].innerHTML = '<i class="fas fa-cog"></i><span>管理</span>';
+                navItems[2].onclick = () => {
+                    const profilePage = document.getElementById('profilePage');
+                    const adminPage = document.getElementById('adminPage');
+                    if (adminPage.classList.contains('active')) {
+                        switchPage('profile');
+                        navItems[2].innerHTML = '<i class="fas fa-user"></i><span>我的</span>';
+                    } else {
+                        switchPage('admin');
+                        navItems[2].innerHTML = '<i class="fas fa-cog"></i><span>管理</span>';
+                    }
+                };
+            } else {
+                switchPage('home');
+                // 重置导航
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems[0].style.display = 'flex';
+                navItems[2].innerHTML = '<i class="fas fa-user"></i><span>我的</span>';
+                navItems[2].onclick = () => switchPage('profile');
+            }
+            
+            updateProfilePage();
+        }
+
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach((n, i) => {
+                n.classList.remove('active');
+                // 处理管理员的导航状态
+                if (currentUser && currentUser.role === 'admin') {
+                    if ((page === 'ranking' && i === 1) || 
+                        (page === 'profile' && i === 2) ||
+                        (page === 'admin' && i === 2)) {
+                        n.classList.add('active');
+                    }
+                } else {
+                    // 普通用户的导航
+                    if ((page === 'home' && i === 0) || 
+                        (page === 'ranking' && i === 1) || 
+                        (page === 'profile' && i === 2)) {
+                        n.classList.add('active');
+                    }
+                }
+            });
+            
+            if (page === 'home') {
+                document.getElementById('homePage').classList.add('active');
+                loadAppData().then(() => loadHomeData());
+            } else if (page === 'ranking') {
+                document.getElementById('rankingPage').classList.add('active');
+                loadAppData().then(() => loadRankingData());
+            } else if (page === 'profile') {
+                document.getElementById('profilePage').classList.add('active');
+                updateProfilePage();
+            } else if (page === 'admin') {
+                document.getElementById('adminPage').classList.add('active');
+                loadAppData().then(() => loadAdminData());
+            }
+        }
+
+        function loadHomeData() {
+            if (!currentUser) return;
+            
+            const monthStart = getMonthStart();
+            const monthEnd = getMonthEnd();
+            
+            let userRecords = appData.records.filter(r => {
+                const recordDate = new Date(r.recordDate);
+                return r.userId === currentUser.id && 
+                       recordDate >= monthStart && 
+                       recordDate <= monthEnd;
+            });
+            
+            userRecords.sort((a, b) => new Date(b.recordDate) - new Date(a.recordDate));
+            
+            const totalGift = userRecords.reduce((sum, r) => sum + (r.giftCount || 0), 0);
+            const totalLive = userRecords.reduce((sum, r) => sum + (r.liveReached || 0), 0);
+            const totalVideo = userRecords.reduce((sum, r) => sum + (r.videoCount || 0), 0);
+            
+            document.getElementById('totalGiftCount').textContent = totalGift;
+            document.getElementById('totalLiveReached').textContent = totalLive;
+            document.getElementById('totalVideoCount').textContent = totalVideo;
+            
+            const addBtn = document.getElementById('addDataBtn');
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecord = userRecords.find(r => r.recordDate === today);
+            if (todayRecord) {
+                addBtn.textContent = '今日已填写';
+                addBtn.disabled = true;
+                addBtn.style.opacity = '0.6';
+            } else {
+                addBtn.innerHTML = '<i class="fas fa-plus-circle"></i> 填写今日数据';
+                addBtn.disabled = false;
+                addBtn.style.opacity = '1';
+            }
+            
+            renderRecordsList(userRecords);
+        }
+
+        function renderRecordsList(records) {
+            const container = document.getElementById('recordsList');
+            
+            if (records.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 40px 20px;"><i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>暂无记录</div>';
+                return;
+            }
+            
+            container.innerHTML = records.map(r => {
+                const editCount = r.editCount || 0;
+                const canEdit = editCount < 2;
+                return `
+                    <div class="record-item">
+                        <div>
+                            <div class="record-date">${formatDate(r.recordDate)}</div>
+                            <div class="record-edit">已修改 ${editCount}/2 次</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="record-data">
+                                <span>🎁 礼包: ${r.giftCount || 0}</span>
+                                <span>📺 直播: ${r.liveReached || 0}</span>
+                                <span>🎬 视频: ${r.videoCount || 0}</span>
+                            </div>
+                            <button class="btn-edit" onclick="openEditModal('${r.id}')" ${!canEdit ? 'disabled' : ''} style="margin-top: 8px;">
+                                <i class="fas fa-edit"></i> ${canEdit ? '修改' : '已达上限'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadRankingData() {
+            const monthStart = getMonthStart();
+            const monthEnd = getMonthEnd();
+            
+            const userStats = {};
+            
+            appData.records
+                .filter(r => {
+                    const recordDate = new Date(r.recordDate);
+                    return recordDate >= monthStart && recordDate <= monthEnd;
+                })
+                .forEach(r => {
+                    if (!userStats[r.userId]) {
+                        const user = appData.users.find(u => u.id === r.userId);
+                        userStats[r.userId] = {
+                            userId: r.userId,
+                            userName: user ? user.name : r.userName,
+                            giftCount: 0,
+                            liveReached: 0,
+                            videoCount: 0
+                        };
+                    }
+                    userStats[r.userId].giftCount += r.giftCount || 0;
+                    userStats[r.userId].liveReached += r.liveReached || 0;
+                    userStats[r.userId].videoCount += r.videoCount || 0;
+                });
+            
+            const rankings = Object.values(userStats)
+                .sort((a, b) => b.giftCount - a.giftCount);
+            
+            renderRankingList(rankings);
+        }
+
+        function renderRankingList(rankings) {
+            const container = document.getElementById('rankingList');
+            
+            if (rankings.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 40px 20px; background: white; border-radius: 16px; margin: 0 16px;"><i class="fas fa-trophy" style="font-size: 48px; margin-bottom: 12px; display: block; color: #fbbf24;"></i>暂无排名数据</div>';
+                return;
+            }
+            
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            
+            container.innerHTML = rankings.map((r, idx) => {
+                let rankClass = 'normal';
+                if (idx === 0) rankClass = 'gold';
+                else if (idx === 1) rankClass = 'silver';
+                else if (idx === 2) rankClass = 'bronze';
+                
+                if (isAdmin) {
+                    return `
+                        <div class="rank-item">
+                            <div class="rank-number ${rankClass}">${idx + 1}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">${r.userName}</div>
+                                <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+                                    直播 ${r.liveReached} · 短视频 ${r.videoCount}
+                                </div>
+                            </div>
+                            <div class="rank-score">${r.giftCount}</div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="rank-item">
+                            <div class="rank-number ${rankClass}">${idx + 1}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">${r.userName}</div>
+                            </div>
+                            <div class="rank-score">${r.giftCount}</div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function updateProfilePage() {
+            if (!currentUser) return;
+            
+            document.getElementById('profileUsername').textContent = currentUser.name;
+            document.getElementById('editUsername').value = currentUser.name;
+            
+            const roleEl = document.getElementById('profileRole');
+            roleEl.textContent = currentUser.role === 'admin' ? '管理员' : '导购员';
+            roleEl.className = currentUser.role === 'admin' ? 'badge badge-admin' : 'badge badge-user';
+            
+            const toggle = document.getElementById('subscriptionToggle');
+            if (currentUser.subscriptionEnabled) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        async function updateUsername() {
+            const newName = document.getElementById('editUsername').value.trim();
+            if (!newName) {
+                showToast('姓名不能为空');
+                return;
+            }
+            
+            showToast('更新中...');
+            
+            try {
+                const { error: userError } = await supabaseClient
+                    .from('users')
+                    .update({ name: newName })
+                    .eq('id', currentUser.id);
+                
+                if (userError) throw userError;
+                
+                const { error: recordError } = await supabaseClient
+                    .from('records')
+                    .update({ user_name: newName })
+                    .eq('user_id', currentUser.id);
+                
+                // 即使记录更新失败也不阻塞
+                
+                currentUser.name = newName;
+                const userIdx = appData.users.findIndex(u => u.id === currentUser.id);
+                if (userIdx !== -1) {
+                    appData.users[userIdx].name = newName;
+                }
+                
+                appData.records.forEach(record => {
+                    if (record.userId === currentUser.id) {
+                        record.userName = newName;
+                    }
+                });
+                
+                saveAppData();
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateProfilePage();
+                loadRankingData();
+                showToast('姓名已更新');
+            } catch (err) {
+                console.error('更新姓名失败:', err);
+                showToast('更新失败：' + (err.message || '请检查网络'));
+            }
+        }
+
+        async function toggleSubscription() {
+            currentUser.subscriptionEnabled = !currentUser.subscriptionEnabled;
+            
+            try {
+                await supabaseClient
+                    .from('users')
+                    .update({ subscription_enabled: currentUser.subscriptionEnabled })
+                    .eq('id', currentUser.id);
+            } catch (err) {
+                console.error('更新订阅状态失败:', err);
+            }
+            
+            const userIdx = appData.users.findIndex(u => u.id === currentUser.id);
+            if (userIdx !== -1) {
+                appData.users[userIdx].subscriptionEnabled = currentUser.subscriptionEnabled;
+            }
+            saveAppData();
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateProfilePage();
+            showToast(currentUser.subscriptionEnabled ? '已开启提醒' : '已关闭提醒');
+        }
+
+        function loadAdminData() {
+            if (!allUsers || allUsers.length === 0) {
+                populateUserFilter();
+            }
+            filterRecords();
+            
+            // 检查是否需要重置今日计数
+            const lastResetDate = localStorage.getItem('lastResetDate');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (lastResetDate !== today) {
+                // 今日未重置，清空之前的计数记录
+                localStorage.removeItem('todayFilledUsers');
+                localStorage.setItem('lastResetDate', today);
+            }
+            
+            // 计算今日填写人数
+            const uniqueUserIds = new Set();
+            appData.records.forEach(r => {
+                if (r.recordDate === today) {
+                    uniqueUserIds.add(r.userId);
+                }
+            });
+            document.getElementById('todayFillCount').textContent = uniqueUserIds.size;
+        }
+
+        let selectedUserIds = [];
+        let allUsers = [];
+        
+        function populateUserFilter() {
+            allUsers = appData.users.filter(u => u.role !== 'admin');
+            renderMultiSelectOptions(allUsers);
+            updateSelectedNames();
+        }
+        
+        function renderMultiSelectOptions(users) {
+            const container = document.getElementById('multiSelectOptions');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div style="padding: 16px; text-align: center; color: #94a3b8;">暂无导购员</div>';
+                return;
+            }
+            
+            const isAllSelected = users.length > 0 && users.every(u => selectedUserIds.includes(u.id));
+            
+            let html = `
+                <div 
+                    style="padding: 10px 16px; display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
+                    onclick="toggleSelectAll(${isAllSelected})"
+                >
+                    <div style="width: 18px; height: 18px; border: 2px solid ${isAllSelected ? '#3b82f6' : '#e2e8f0'}; border-radius: 4px; margin-right: 12px; display: flex; align-items: center; justify-content: center; background: ${isAllSelected ? '#3b82f6' : 'white'};">
+                        ${isAllSelected ? '<i class="fas fa-check" style="font-size: 12px; color: white;"></i>' : ''}
+                    </div>
+                    <span style="font-weight: 600; color: #1e293b;">全选</span>
+                    <span style="margin-left: auto; color: #94a3b8; font-size: 13px;">(${selectedUserIds.length}/${users.length})</span>
+                </div>
+            `;
+            
+            html += users.map(u => {
+                const isSelected = selectedUserIds.includes(u.id);
+                return `
+                    <div 
+                        class="user-option"
+                        style="padding: 10px 16px; display: flex; align-items: center; cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='#f8fafc'"
+                        onmouseout="this.style.background='white'"
+                        onclick="toggleUserSelection('${u.id}')"
+                    >
+                        <div style="width: 18px; height: 18px; border: 2px solid ${isSelected ? '#3b82f6' : '#e2e8f0'}; border-radius: 4px; margin-right: 12px; display: flex; align-items: center; justify-content: center; background: ${isSelected ? '#3b82f6' : 'white'};">
+                            ${isSelected ? '<i class="fas fa-check" style="font-size: 12px; color: white;"></i>' : ''}
+                        </div>
+                        <span style="color: #1e293b;">${u.name}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function toggleMultiSelect() {
+            const dropdown = document.getElementById('multiSelectDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        function toggleUserSelection(userId) {
+            const index = selectedUserIds.indexOf(userId);
+            if (index > -1) {
+                selectedUserIds.splice(index, 1);
+            } else {
+                selectedUserIds.push(userId);
+            }
+            const searchText = (document.getElementById('multiSelectSearch').value || '').toLowerCase();
+            const filteredUsers = allUsers.filter(u => u.name.toLowerCase().includes(searchText));
+            renderMultiSelectOptions(filteredUsers);
+            updateSelectedNames();
+            filterRecords();
+        }
+        
+        function toggleSelectAll(isAllSelected) {
+            const searchText = (document.getElementById('multiSelectSearch').value || '').toLowerCase();
+            const filteredUsers = allUsers.filter(u => u.name.toLowerCase().includes(searchText));
+            
+            if (isAllSelected) {
+                selectedUserIds = selectedUserIds.filter(id => !filteredUsers.some(u => u.id === id));
+            } else {
+                filteredUsers.forEach(u => {
+                    if (!selectedUserIds.includes(u.id)) {
+                        selectedUserIds.push(u.id);
+                    }
+                });
+            }
+            renderMultiSelectOptions(filteredUsers);
+            updateSelectedNames();
+            filterRecords();
+        }
+        
+        function filterMultiSelectOptions() {
+            const searchText = (document.getElementById('multiSelectSearch').value || '').toLowerCase();
+            const filteredUsers = allUsers.filter(u => u.name.toLowerCase().includes(searchText));
+            renderMultiSelectOptions(filteredUsers);
+        }
+        
+        function updateSelectedNames() {
+            const textEl = document.getElementById('selectedNamesText');
+            if (selectedUserIds.length === 0) {
+                textEl.textContent = '选择导购员';
+                textEl.style.color = '#94a3b8';
+            } else {
+                const selectedNames = allUsers
+                    .filter(u => selectedUserIds.includes(u.id))
+                    .map(u => u.name)
+                    .join('、');
+                
+                if (selectedNames.length > 15) {
+                    textEl.textContent = `已选择 ${selectedUserIds.length} 人`;
+                } else {
+                    textEl.textContent = selectedNames;
+                }
+                textEl.style.color = '#1e293b';
+            }
+        }
+        
+        function filterRecords() {
+            let filtered = [...appData.records];
+            
+            const date = document.getElementById('filterDate').value;
+            
+            if (selectedUserIds.length > 0) {
+                filtered = filtered.filter(r => selectedUserIds.includes(r.userId));
+            }
+            
+            if (date) {
+                filtered = filtered.filter(r => r.recordDate === date);
+            }
+            
+            filtered.sort((a, b) => new Date(b.recordDate) - new Date(a.recordDate));
+            renderAdminRecordsList(filtered);
+        }
+
+        function renderAdminRecordsList(records) {
+            const container = document.getElementById('adminRecordsList');
+            
+            if (records.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 40px 20px;">暂无记录</div>';
+                return;
+            }
+            
+            container.innerHTML = records.map(r => {
+                const user = appData.users.find(u => u.id === r.userId);
+                return `
+                    <div class="record-item">
+                        <div>
+                            <div class="record-date">${user ? user.name : '未知'} - ${formatDate(r.recordDate)}</div>
+                        </div>
+                        <div class="record-data" style="display: flex; align-items: center;">
+                            <div style="text-align: right; margin-right: 10px;">
+                                <span>🎁 礼包: ${r.giftCount || 0}</span>
+                                <span>📺 直播: ${r.liveReached || 0}</span>
+                                <span>🎬 视频: ${r.videoCount || 0}</span>
+                            </div>
+                            <button class="btn-edit" style="background: #fecaca; color: #dc2626; border: 1px solid #dc2626;" onclick="deleteRecord('${r.id}')">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function deleteRecord(recordId) {
+            if (confirm('确定要删除这条记录吗？')) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('records')
+                        .delete()
+                        .eq('id', recordId);
+                    
+                    if (error) throw error;
+                    
+                    appData.records = appData.records.filter(r => r.id !== recordId);
+                    saveAppData();
+                    loadAdminData();
+                    loadRankingData();
+                    showToast('记录已删除');
+                } catch (err) {
+                    console.error('删除失败:', err);
+                    showToast('删除失败：' + (err.message || '请检查网络'));
+                }
+            }
+        }
+        
+        async function refreshData() {
+            showToast('正在刷新数据...');
+            await loadAppData();
+            loadAdminData();
+            loadRankingData();
+            showToast('数据已刷新');
+        }
+
+        function exportAllData() {
+            const date = document.getElementById('filterDate').value;
+            
+            let recordsToExport = [...appData.records];
+            
+            if (selectedUserIds.length > 0) {
+                recordsToExport = recordsToExport.filter(r => selectedUserIds.includes(r.userId));
+            }
+            
+            if (date) {
+                recordsToExport = recordsToExport.filter(r => r.recordDate === date);
+            }
+            
+            const csvContent = [
+                ['姓名', '日期', '直播达成', '短视频数量', '礼包售卖数量'].join(','),
+                ...recordsToExport.map(r => {
+                    const user = appData.users.find(u => u.id === r.userId);
+                    return [
+                        user ? user.name : '未知',
+                        r.recordDate,
+                        r.liveReached || 0,
+                        r.videoCount || 0,
+                        r.giftCount || 0
+                    ].join(',');
+                })
+            ].join('\n');
+            
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `业绩数据_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showToast(`已导出 ${recordsToExport.length} 条记录`);
+        }
+
+        function openFormModal() {
+            editingRecordId = null;
+            document.getElementById('formTitle').textContent = '填写今日数据';
+            document.getElementById('formSubmitBtn').textContent = '提交数据';
+            document.getElementById('formDate').valueAsDate = new Date();
+            document.getElementById('formLiveReached').value = '';
+            document.getElementById('formVideoCount').value = '';
+            document.getElementById('formGiftCount').value = '';
+            document.getElementById('formModal').classList.remove('hidden');
+        }
+
+        function openEditModal(recordId) {
+            const record = appData.records.find(r => r.id === recordId);
+            if (!record) return;
+            
+            const editCount = record.editCount || 0;
+            if (editCount >= 2) {
+                showToast('已达修改上限');
+                return;
+            }
+            
+            editingRecordId = recordId;
+            document.getElementById('formTitle').textContent = '修改数据';
+            document.getElementById('formSubmitBtn').textContent = '保存修改';
+            document.getElementById('formDate').value = record.recordDate;
+            document.getElementById('formLiveReached').value = record.liveReached || '';
+            document.getElementById('formVideoCount').value = record.videoCount || '';
+            document.getElementById('formGiftCount').value = record.giftCount || '';
+            document.getElementById('formModal').classList.remove('hidden');
+        }
+
+        function closeFormModal() {
+            document.getElementById('formModal').classList.add('hidden');
+            editingRecordId = null;
+        }
+
+        async function submitForm() {
+            const recordDate = document.getElementById('formDate').value;
+            const liveReached = parseInt(document.getElementById('formLiveReached').value) || 0;
+            const videoCount = parseInt(document.getElementById('formVideoCount').value) || 0;
+            const giftCount = parseInt(document.getElementById('formGiftCount').value) || 0;
+            
+            if (!recordDate) {
+                showToast('请选择日期');
+                return;
+            }
+            
+            showToast('提交中...');
+            
+            try {
+                if (editingRecordId) {
+                    const recordIdx = appData.records.findIndex(r => r.id === editingRecordId);
+                    if (recordIdx !== -1) {
+                        const newEditCount = (appData.records[recordIdx].editCount || 0) + 1;
+                        
+                        const { error } = await supabaseClient
+                            .from('records')
+                            .update({
+                                record_date: recordDate,
+                                live_reached: liveReached,
+                                video_count: videoCount,
+                                gift_count: giftCount,
+                                edit_count: newEditCount
+                            })
+                            .eq('id', editingRecordId);
+                        
+                        if (error) throw error;
+                        
+                        appData.records[recordIdx].recordDate = recordDate;
+                        appData.records[recordIdx].liveReached = liveReached;
+                        appData.records[recordIdx].videoCount = videoCount;
+                        appData.records[recordIdx].giftCount = giftCount;
+                        appData.records[recordIdx].editCount = newEditCount;
+                        showToast('修改成功');
+                    }
+                } else {
+                    const today = new Date().toISOString().split('T')[0];
+                    if (recordDate === today) {
+                        const existingToday = appData.records.find(
+                            r => r.userId === currentUser.id && r.recordDate === today
+                        );
+                        if (existingToday) {
+                            showToast('今日已填写数据');
+                            return;
+                        }
+                    }
+                    
+                    const newRecord = {
+                        id: Date.now().toString(),
+                        user_id: currentUser.id,
+                        user_name: currentUser.name,
+                        record_date: recordDate,
+                        live_reached: liveReached,
+                        video_count: videoCount,
+                        gift_count: giftCount,
+                        edit_count: 0
+                    };
+                    
+                    const { error } = await supabaseClient
+                        .from('records')
+                        .insert([newRecord]);
+                    
+                    if (error) throw error;
+                    
+                    appData.records.push({
+                        id: newRecord.id,
+                        userId: newRecord.user_id,
+                        userName: newRecord.user_name,
+                        recordDate: newRecord.record_date,
+                        liveReached: newRecord.live_reached,
+                        videoCount: newRecord.video_count,
+                        giftCount: newRecord.gift_count,
+                        editCount: 0
+                    });
+                    showToast('数据提交成功');
+                }
+                
+                saveAppData();
+                closeFormModal();
+                loadHomeData();
+                loadRankingData();
+                
+                // 如果是管理员，更新今日填写人数
+                if (currentUser && currentUser.role === 'admin') {
+                    loadAdminData();
+                }
+            } catch (err) {
+                console.error('提交失败:', err);
+                showToast('提交失败：' + (err.message || '请检查网络'));
+            }
+        }
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('bottomNav').classList.add('hidden');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('loginChoicePage').classList.add('active');
+            
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerName').value = '';
+            document.getElementById('registerPhone').value = '';
+            document.getElementById('registerPassword').value = '';
+        }
+
+        // 点击外部关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            const container = document.querySelector('.multi-select-container');
+            const dropdown = document.getElementById('multiSelectDropdown');
+            
+            if (container && !container.contains(e.target) && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
