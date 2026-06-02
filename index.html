@@ -797,7 +797,7 @@
                 </div>
                 
                 <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">日期</label>
-                <input type="date" id="formDate" class="input-field">
+                <input type="date" id="formDate" class="input-field" max="" />
                 
                 <label style="display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">直播达成</label>
                 <input type="number" id="formLiveReached" class="input-field" placeholder="请输入直播达成数量" min="0">
@@ -1656,7 +1656,12 @@
             editingRecordId = null;
             document.getElementById('formTitle').textContent = '填写今日数据';
             document.getElementById('formSubmitBtn').textContent = '提交数据';
-            document.getElementById('formDate').valueAsDate = new Date();
+            
+            const today = new Date().toISOString().split('T')[0];
+            const formDateInput = document.getElementById('formDate');
+            formDateInput.value = today;
+            formDateInput.max = today;
+            
             document.getElementById('formLiveReached').value = '';
             document.getElementById('formVideoCount').value = '';
             document.getElementById('formGiftCount').value = '';
@@ -1676,7 +1681,12 @@
             editingRecordId = recordId;
             document.getElementById('formTitle').textContent = '修改数据';
             document.getElementById('formSubmitBtn').textContent = '保存修改';
-            document.getElementById('formDate').value = record.recordDate;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const formDateInput = document.getElementById('formDate');
+            formDateInput.value = record.recordDate;
+            formDateInput.max = today;
+            
             document.getElementById('formLiveReached').value = record.liveReached || '';
             document.getElementById('formVideoCount').value = record.videoCount || '';
             document.getElementById('formGiftCount').value = record.giftCount || '';
